@@ -1,0 +1,168 @@
+1. Introduction
+ 
+A social networking platform is experiencing API timeouts while fetching data from the database through the endpoint:
+ 
+http://localhost:8080/getPostsUploaded
+ 
+This API retrieves records from the Posts(id, post_by, post_dt, post_details) table. 
+
+The primary issue arises due to the large volume of data being fetched in a single request,
+
+leading to slow database performance and eventual timeouts.
+ 
+ 
+2. Problem Statement
+ 
+The current implementation likely retrieves a massive dataset in one go, which leads to:
+ 
+Increased query execution time
+
+High memory consumption
+
+Network latency
+
+API timeout failures
+ 
+This approach is not scalable and fails under high data volume.
+ 
+ 
+3. Proposed Efficient Strategies
+ 
+ 
+3.1 Pagination
+ 
+Pagination is the most effective way to handle large datasets by dividing results 
+
+into smaller chunks.
+ 
+Implementation:
+ 
+SELECT id, post_by, post_dt, post_details
+
+FROM Posts
+
+ORDER BY post_dt DESC
+
+LIMIT 50 OFFSET 0;
+ 
+API Example:
+ 
+GET /getPostsUploaded?page=1&limit=50
+ 
+Benefits:
+ 
+Reduces response size
+
+Improves response time
+
+Prevents server overload
+ 
+ 
+3.2 Cursor-Based Pagination
+ 
+Offset-based pagination becomes inefficient for very large datasets. Cursor-based pagination is a better alternative.
+ 
+Implementation:
+ 
+SELECT id, post_by, post_dt, post_details
+
+FROM Posts
+
+WHERE post_dt < 'last_received_timestamp'
+
+ORDER BY post_dt DESC
+
+LIMIT 50;
+ 
+Benefits:
+ 
+Faster for large datasets
+
+More efficient than OFFSET
+
+Commonly used in social media feeds
+ 
+ 
+3.3 Database Indexing
+ 
+Indexes improve query performance significantly by reducing full table scans.
+ 
+Implementation:
+ 
+CREATE INDEX idx_post_dt ON Posts(post_dt);
+
+CREATE INDEX idx_post_by ON Posts(post_by);
+ 
+Benefits:
+ 
+Faster data retrieval
+
+Optimized search operations
+
+Reduced query execution time
+ 
+ 
+3.4 Fetch Only Required Columns
+ 
+Avoid using SELECT * and fetch only necessary fields.
+ 
+Efficient Query:
+ 
+SELECT id, post_by, post_dt
+
+FROM Posts;
+ 
+Benefits:
+ 
+Reduces data transfer size
+
+Improves performance
+ 
+ 
+3.5 Caching Mechanism
+ 
+Frequently accessed data can be stored in a cache (e.g., Redis).
+ 
+Benefits:
+ 
+Reduces database load
+
+Faster response time
+
+Improves scalability
+ 
+ 
+3.6 Asynchronous Data Processing
+ 
+For extremely large datasets, use asynchronous processing instead of direct response.
+ 
+Approach:
+ 
+Client sends request
+
+Server initiates background job
+
+Returns a job ID
+
+Client retrieves result later
+ 
+Benefits:
+ 
+Prevents timeout
+
+Improves user experience
+ 
+ 
+3.7 Data Partitioning
+ 
+Partition the Posts table based on time (e.g., monthly or yearly).
+ 
+Benefits:
+ 
+Faster query execution
+
+Efficient data management
+
+Improved scalability
+ 
+ 
